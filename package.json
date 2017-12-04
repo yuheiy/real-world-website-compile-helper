@@ -1,0 +1,14 @@
+{
+  "name": "real-world-website-render-helper",
+  "version": "0.0.1",
+  "main": "index.js",
+  "repository": "https://github.com/yuheiy/real-world-website-render-helper.git",
+  "author": "Yuhei Yasuda <yuhei.yasuda1003@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "globby": "^7.1.1",
+    "make-dir": "^1.1.0",
+    "mime": "^2.0.3",
+    "minimatch": "^3.0.4"
+  }
+}
