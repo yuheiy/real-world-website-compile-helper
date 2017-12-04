@@ -25,7 +25,7 @@ const {
         return pug.renderFile(inputFilePath, data)
       })
   },
-}, basePath)
+}, '/subdir')
 ```
 
 ## License
