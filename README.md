@@ -22,7 +22,7 @@ const renderHelperConfig = {
     exclude: ['**/_*', '**/_*/**'],
     task: (pathname) => {
         return readPageData(pathname).then((data) => {
-            return pug.renderFile(filename, data)
+            return pug.renderFile(pathname, data)
         })
     },
 }
