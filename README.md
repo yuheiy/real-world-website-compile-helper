@@ -9,15 +9,16 @@ npm install -D yuheiy/real-world-website-render-helper
 ## Usage
 
 ```js
-const pug = require('pug')
 const renderHelper = require('real-world-website-render-helper')
-const browserSync = require('browser-sync').create()
 const gulp = require('gulp')
+const pug = require('pug')
+const browserSync = require('browser-sync').create()
+const del = require('del')
 
 const renderHelperConfig = {
-    input: './src',
+    input: 'src',
     inputExt: 'pug',
-    output: './dist',
+    output: 'dist',
     outputExt: 'html',
     exclude: ['**/_*', '**/_*/**'],
     task: (pathname) => {
@@ -37,13 +38,22 @@ const serve = (done) => {
     )
 }
 
-gulp.task('default', serve)
+const watch = (done) => {
+    gulp.watch('src/**/*').on('all', browserSync.reload)
+    done()
+}
+
+gulp.task('default', gulp.series(serve, watch))
+
+const clean = () => {
+    return del('dist')
+}
 
 const html = () => {
     return renderHelper.build(renderHelperConfig)
 }
 
-gulp.task('build', html)
+gulp.task('build', gulp.series(clean, html))
 ```
 
 ## License
