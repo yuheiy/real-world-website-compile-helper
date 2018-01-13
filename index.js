@@ -1,6 +1,6 @@
 const path = require('path')
 const fs = require('fs')
-const {promisify} = require('util')
+const { promisify } = require('util')
 const url = require('url')
 const minimatch = require('minimatch')
 const mime = require('mime')
@@ -9,99 +9,99 @@ const makeDir = require('make-dir')
 
 const writeFileAsync = promisify(fs.writeFile)
 
-class Config {
-  constructor(config) {
-    this.input = config.input || './src'
-    this.inputExt = config.inputExt || 'html'
-    this.output = config.output || './dist'
-    this.outputExt = config.outputExt || 'html'
-    this.exclude = config.exclude || ['**/_*', '**/_*/**']
-    this.task = config.task
-  }
-
-  isExclude(pathname) {
-    pathname = path.join(this.input, pathname)
-    return this.exclude.some((exclude) => minimatch(pathname, exclude))
-  }
-
-  getInputPath(outputPath) {
-    const extRe = new RegExp(`\\.${this.outputExt}$`, 'i')
-    return path.join(
-      this.input,
-      outputPath.replace(extRe, `.${this.inputExt}`),
-    )
-  }
-
-  getOutputPath(inputPath) {
-    const input = path.normalize(this.input)
-    const output = path.normalize(this.output)
-    const extRe = new RegExp(`\\.${this.inputExt}$`, 'i')
-    return inputPath
-      .replace(path.normalize(input), path.normalize(output))
-      .replace(extRe, `.${this.outputExt}`)
-  }
-}
-
 const normalizePath = (pathname) => {
-  const isDirectoryPath = /\/$/.test(pathname)
-  return isDirectoryPath
-    ? path.join(pathname, 'index.html')
-    : pathname
+    const isDirectory = /\/$/.test(pathname)
+    return isDirectory ? path.join(pathname, 'index.html') : pathname
 }
 
-const renderMiddleware = (config, basePath) => (req, res, next) => {
-  const parsedPath = url.parse(req.url).pathname
-  const reqPath = normalizePath(parsedPath)
+const loadConfig = (options = {}) => {
+    const input = path.normalize(options.input || './src')
+    const inputExt = options.inputExt
+    const output = path.normalize(options.output || './dist')
+    const outputExt = options.outputExt
+    const exclude = options.exclude || ['**/_*', '**/_*/**']
+    const task = options.task
 
-  if (!reqPath.startsWith(`${basePath}/`)) {
-    return next()
-  }
+    return {
+        input,
+        inputExt,
+        output,
+        outputExt,
+        exclude,
+        task,
+    }
+}
 
-  const outputPath = reqPath.replace(`${basePath}/`, '')
-  const inputPath = config.getInputPath(outputPath)
-  const isInputFileExists = fs.existsSync(inputPath) && fs.statSync(inputPath).isFile()
+const withConfig = (fn) => (options, ...args) => fn(loadConfig(options), ...args)
 
-  if (!isInputFileExists) {
-    return next()
-  }
+const createRenderMiddleware = withConfig((config, basePath = '') => {
+    const getInputPath = (outputPath) => {
+        const dirname = path.join(config.input, path.dirname(outputPath))
+        const basename = path.basename(outputPath, `.${config.outputExt}`)
+        return path.join(dirname, `${basename}.${config.inputExt}`)
+    }
 
-  if (config.isExclude(inputPath)) {
-    return next()
-  }
+    const isExcluded = (inputPath) => {
+        const pathname = path.join(config.input, inputPath)
+        return config.exclude.some((pattern) => minimatch(pathname, pattern))
+    }
 
-  Promise.resolve(config.task(inputPath))
-    .then((result) => {
-      res.setHeader('Content-Type', mime.getType(outputPath))
-      res.end(result)
+    const pathPrefix = `${basePath}/`
+
+    const renderMiddleware = (req, res, next) => {
+        const parsedPath = url.parse(req.url).pathname
+        const reqPath = normalizePath(parsedPath)
+
+        if (!reqPath.startsWith(pathPrefix)) {
+            return next()
+        }
+
+        const outputPath = reqPath.replace(pathPrefix, '')
+        const inputPath = getInputPath(outputPath)
+        const isReqFileExists = fs.existsSync(inputPath) && fs.statSync(inputPath).isFile()
+
+        if (!isReqFileExists) {
+            return next()
+        }
+
+        if (isExcluded(inputPath)) {
+            return next()
+        }
+
+        Promise.resolve(config.task(inputPath)).then((result) => {
+            res.setHeader('Content-Type', mime.getType(outputPath))
+            res.end(result)
+        })
+    }
+
+    return renderMiddleware
+})
+
+const build = withConfig(async (config) => {
+    const getOutputPath = (inputPath) => {
+        const dirname = path.dirname(inputPath.replace(config.input, config.output))
+        const basename = path.basename(inputPath, `.${config.inputExt}`)
+        return path.join(dirname, `${basename}.${config.outputExt}`)
+    }
+
+    const targetPattern = path.join(config.input, `**/*.${config.inputExt}`)
+    const inputPaths = await globby(targetPattern, {
+        nodir: true,
+        ignore: config.exclude.map((exclude) => path.join(config.input, exclude)),
     })
-    .catch((err) => {
-      throw err
-    })
-}
 
-const buildAllFiles = (config) => async () => {
-  const targetFiles = path.join(config.input, `**/*.${config.inputExt}`)
-  const inputPaths = await globby(targetFiles, {
-    nodir: true,
-    ignore: config.exclude.map((exclude) => path.join(config.input, exclude)),
-  })
+    return Promise.all(
+        inputPaths.map(async (inputPath) => {
+            const outputFilePath = getOutputPath(inputPath)
+            const outputDir = path.dirname(outputFilePath)
+            await makeDir(outputDir)
+            const result = await config.task(inputPath)
+            return writeFileAsync(outputFilePath, result)
+        }),
+    )
+})
 
-  await Promise.all(
-    inputPaths
-      .map(async (inputPath) => {
-        const outputFilePath = config.getOutputPath(inputPath)
-        const outputDir = path.dirname(outputFilePath)
-        await makeDir(outputDir)
-        const result = await config.task(inputPath)
-        await writeFileAsync(outputFilePath, result)
-      })
-  )
-}
-
-module.exports = (options = {}, basePath = '') => {
-  const config = new Config(options)
-  return {
-    renderMiddleware: renderMiddleware(config, basePath),
-    buildAllFiles: buildAllFiles(config),
-  }
+module.exports = {
+    createRenderMiddleware,
+    build,
 }

@@ -8,7 +8,7 @@
   "dependencies": {
     "globby": "^7.1.1",
     "make-dir": "^1.1.0",
-    "mime": "^2.0.3",
+    "mime": "^2.2.0",
     "minimatch": "^3.0.4"
   }
 }

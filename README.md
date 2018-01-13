@@ -10,22 +10,40 @@ npm install -D yuheiy/real-world-website-render-helper
 
 ```js
 const pug = require('pug')
-const {
-  renderMiddleware: renderHtmlMiddleware,
-  buildAllFiles: html,
-} = require('real-world-website-render-helper')({
-  input: './src/html',
-  inputExt: 'pug',
-  output: './dist',
-  outputExt: 'html',
-  exclude: ['**/_*', '**/_*/**'],
-  task: (inputFilePath) => {
-    return readPageData(inputFilePath)
-      .then((data) => {
-        return pug.renderFile(inputFilePath, data)
-      })
-  },
-}, '/subdir')
+const renderHelper = require('real-world-website-render-helper')
+const browserSync = require('browser-sync').create()
+const gulp = require('gulp')
+
+const renderHelperConfig = {
+    input: './src',
+    inputExt: 'pug',
+    output: './dist',
+    outputExt: 'html',
+    exclude: ['**/_*', '**/_*/**'],
+    task: (pathname) => {
+        return readPageData(pathname).then((data) => {
+            return pug.renderFile(filename, data)
+        })
+    },
+}
+
+const serve = (done) => {
+    browserSync.init(
+        {
+            server: 'dist',
+            middleware: renderHelper.createRenderMiddleware(renderHelperConfig),
+        },
+        done,
+    )
+}
+
+gulp.task('default', serve)
+
+const html = () => {
+    return renderHelper.build(renderHelperConfig)
+}
+
+gulp.task('build', html)
 ```
 
 ## License

@@ -1,0 +1,5 @@
+printWidth: 100
+trailingComma: all
+arrowParens: always
+semi: false
+singleQuote: true
