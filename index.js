@@ -87,7 +87,7 @@ const build = withConfig(async (config) => {
     const targetPattern = path.join(config.input, `**/*.${config.inputExt}`)
     const inputPaths = await globby(targetPattern, {
         nodir: true,
-        ignore: config.exclude.map((exclude) => path.join(config.input, exclude)),
+        ignore: config.exclude.map((pattern) => path.join(config.input, pattern)),
     })
 
     return Promise.all(
