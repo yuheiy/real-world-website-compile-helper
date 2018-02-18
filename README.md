@@ -39,7 +39,16 @@ const serve = (done) => {
 }
 
 const watch = (done) => {
-    gulp.watch('src/**/*').on('all', browserSync.reload)
+    const options = {
+        delay: 50,
+    }
+
+    const reload = (done) => {
+        browserSync.reload()
+        done()
+    }
+
+    gulp.watch('src/**/*', options, reload)
     done()
 }
 
