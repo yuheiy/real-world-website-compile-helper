@@ -4,6 +4,7 @@ const renderHelper = require('../')
 const browserSync = require('browser-sync').create()
 const replaceExt = require('replace-ext')
 const pug = require('pug')
+const rimraf = require('rimraf')
 
 const isProd = process.argv[2] === '--prod'
 
@@ -29,7 +30,9 @@ const startDevServer = () => {
 }
 
 const build = () => {
-    renderHelper.build(renderHelperConfig)
+    rimraf(path.join(__dirname, 'dist'), () => {
+        renderHelper.build(renderHelperConfig)
+    })
 }
 
 if (isProd) {
