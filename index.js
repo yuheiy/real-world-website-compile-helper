@@ -2,6 +2,7 @@ const path = require('path')
 const fs = require('fs')
 const { promisify } = require('util')
 const url = require('url')
+const replaceExt = require('replace-ext')
 const minimatch = require('minimatch')
 const mime = require('mime')
 const globby = require('globby')
@@ -38,9 +39,10 @@ const withConfig = (fn) => (options, ...args) =>
 
 const createRenderMiddleware = withConfig((config, basePath = '') => {
     const getInputPath = (outputPath) => {
-        const dirname = path.join(config.input, path.dirname(outputPath))
-        const basename = path.basename(outputPath, `.${config.outputExt}`)
-        return path.join(dirname, `${basename}.${config.inputExt}`)
+        return replaceExt(
+            path.join(config.input, outputPath),
+            `.${config.inputExt}`,
+        )
     }
 
     const isExcluded = (inputPath) => {
@@ -86,11 +88,10 @@ const createRenderMiddleware = withConfig((config, basePath = '') => {
 
 const build = withConfig(async (config) => {
     const getOutputPath = (inputPath) => {
-        const dirname = path.dirname(
+        return replaceExt(
             inputPath.replace(config.input, config.output),
+            `.${config.outputExt}`,
         )
-        const basename = path.basename(inputPath, `.${config.inputExt}`)
-        return path.join(dirname, `${basename}.${config.outputExt}`)
     }
 
     const targetPattern = path.join(config.input, `**/*.${config.inputExt}`)
