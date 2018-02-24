@@ -10,5 +10,10 @@
     "make-dir": "^1.1.0",
     "mime": "^2.2.0",
     "minimatch": "^3.0.4"
+  },
+  "devDependencies": {
+    "browser-sync": "^2.23.6",
+    "pug": "^2.0.0-rc.4",
+    "replace-ext": "^1.0.0"
   }
 }
