@@ -13,7 +13,7 @@ const writeFileAsync = promisify(fs.writeFile)
 
 const normalizePath = (pathname) => {
     const isDirectory = /\/$/.test(pathname)
-    return isDirectory ? path.join(pathname, 'index.html') : pathname
+    return isDirectory ? path.posix.join(pathname, 'index.html') : pathname
 }
 
 const loadConfig = (options = {}) => {
@@ -50,7 +50,7 @@ const createRenderMiddleware = withConfig((config, basePath = '') => {
         return config.exclude.some((pattern) => minimatch(pathname, pattern))
     }
 
-    const pathPrefix = `${basePath}/`
+    const pathPrefix = path.posix.join(basePath, '/')
 
     const renderMiddleware = (req, res, next) => {
         const parsedPath = url.parse(req.url).pathname
