@@ -89,7 +89,7 @@ const createRenderMiddleware = withConfig((config, basePath = '') => {
             return next()
         }
 
-        readFileAsync(inputPath, 'utf8')
+        readFileAsync(inputPath)
             .then((fileData) =>
                 config.render({ src: fileData, filename: inputPath }),
             )
@@ -122,7 +122,7 @@ const build = withConfig(async (config) => {
             const outputFilePath = getOutputPath(inputPath)
             const outputDir = path.dirname(outputFilePath)
             await makeDir(outputDir)
-            const fileData = await readFileAsync(inputPath, 'utf8')
+            const fileData = await readFileAsync(inputPath)
             const result = await config.render({
                 src: fileData,
                 filename: inputPath,

@@ -17,7 +17,7 @@ const renderHelperConfig = {
         const pageData = JSON.parse(
             fs.readFileSync(replaceExt(filename, '.json'), 'utf8') || '{}',
         )
-        return pug.render(src, { ...pageData, filename })
+        return pug.render(src.toString(), { ...pageData, filename })
     },
 }
 
