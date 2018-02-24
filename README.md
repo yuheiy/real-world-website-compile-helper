@@ -65,6 +65,7 @@ const html = () => {
 gulp.task('build', gulp.series(clean, html))
 ```
 
-## License
+## Related Projects
 
-MIT
+* [Real world website boilerplate](https://github.com/yuheiy/real-world-website-boilerplate)
+* [yuheiy.com](https://github.com/yuheiy/yuheiy.com)
