@@ -5,7 +5,7 @@ const url = require('url')
 const replaceExt = require('replace-ext')
 const minimatch = require('minimatch')
 const mime = require('mime')
-const globby = require('globby')
+const fg = require('fast-glob')
 const makeDir = require('make-dir')
 
 const readFileAsync = promisify(fs.readFile)
@@ -111,8 +111,7 @@ const build = withConfig(async (config) => {
     }
 
     const targetPattern = path.join(config.input, `**/*.${config.inputExt}`)
-    const inputPaths = await globby(targetPattern, {
-        nodir: true,
+    const inputPaths = await fg(targetPattern, {
         ignore: config.exclude.map((pattern) =>
             path.join(config.input, pattern),
         ),
