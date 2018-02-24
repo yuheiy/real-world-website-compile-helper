@@ -7,7 +7,7 @@
   "license": "MIT",
   "dependencies": {
     "fast-glob": "^2.0.4",
-    "make-dir": "^1.1.0",
+    "make-dir": "^1.2.0",
     "mime": "^2.2.0",
     "minimatch": "^3.0.4",
     "replace-ext": "^1.0.0"
