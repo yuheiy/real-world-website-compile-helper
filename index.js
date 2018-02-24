@@ -24,6 +24,22 @@ const loadConfig = (options = {}) => {
     const exclude = options.exclude || ['**/_*', '**/_*/**']
     const render = options.render
 
+    if (typeof inputExt !== 'string') {
+        throw new TypeError('inputExt must be a string')
+    }
+
+    if (typeof outputExt !== 'string') {
+        throw new TypeError('outputExt must be a string')
+    }
+
+    if (!Array.isArray(exclude)) {
+        throw new TypeError('exclude must be a array')
+    }
+
+    if (typeof render !== 'function') {
+        throw new TypeError('render must be a function')
+    }
+
     return {
         input,
         inputExt,
