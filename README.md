@@ -21,9 +21,9 @@ const renderHelperConfig = {
     output: 'dist',
     outputExt: 'html',
     exclude: ['**/_*', '**/_*/**'],
-    task: (pathname) => {
-        return readPageData(pathname).then((data) => {
-            return pug.renderFile(pathname, data)
+    render: ({ src, filename }) => {
+        return readPageData(filename).then((pageData) => {
+            return pug.render(src, { ...pageData, filename })
         })
     },
 }
@@ -31,7 +31,7 @@ const renderHelperConfig = {
 const serve = (done) => {
     browserSync.init(
         {
-            server: 'dist',
+            server: true,
             middleware: renderHelper.createRenderMiddleware(renderHelperConfig),
         },
         done,

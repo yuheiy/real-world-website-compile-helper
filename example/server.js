@@ -12,11 +12,11 @@ const renderHelperConfig = {
     inputExt: 'pug',
     output: path.join(__dirname, 'dist'),
     outputExt: 'html',
-    task: (filename) => {
+    render: ({ src, filename }) => {
         const pageData = JSON.parse(
             fs.readFileSync(replaceExt(filename, '.json'), 'utf8') || '{}',
         )
-        return pug.renderFile(filename, pageData)
+        return pug.render(src, { ...pageData, filename })
     },
 }
 

@@ -7,6 +7,7 @@ const mime = require('mime')
 const globby = require('globby')
 const makeDir = require('make-dir')
 
+const readFileAsync = promisify(fs.readFile)
 const writeFileAsync = promisify(fs.writeFile)
 
 const normalizePath = (pathname) => {
@@ -20,7 +21,7 @@ const loadConfig = (options = {}) => {
     const output = path.normalize(options.output || './dist')
     const outputExt = options.outputExt
     const exclude = options.exclude || ['**/_*', '**/_*/**']
-    const task = options.task
+    const render = options.render
 
     return {
         input,
@@ -28,11 +29,12 @@ const loadConfig = (options = {}) => {
         output,
         outputExt,
         exclude,
-        task,
+        render,
     }
 }
 
-const withConfig = (fn) => (options, ...args) => fn(loadConfig(options), ...args)
+const withConfig = (fn) => (options, ...args) =>
+    fn(loadConfig(options), ...args)
 
 const createRenderMiddleware = withConfig((config, basePath = '') => {
     const getInputPath = (outputPath) => {
@@ -58,7 +60,8 @@ const createRenderMiddleware = withConfig((config, basePath = '') => {
 
         const outputPath = reqPath.replace(pathPrefix, '')
         const inputPath = getInputPath(outputPath)
-        const isReqFileExists = fs.existsSync(inputPath) && fs.statSync(inputPath).isFile()
+        const isReqFileExists =
+            fs.existsSync(inputPath) && fs.statSync(inputPath).isFile()
 
         if (!isReqFileExists) {
             return next()
@@ -68,10 +71,14 @@ const createRenderMiddleware = withConfig((config, basePath = '') => {
             return next()
         }
 
-        Promise.resolve(config.task(inputPath)).then((result) => {
-            res.setHeader('Content-Type', mime.getType(outputPath))
-            res.end(result)
-        })
+        readFileAsync(inputPath, 'utf8')
+            .then((fileData) =>
+                config.render({ src: fileData, filename: inputPath }),
+            )
+            .then((result) => {
+                res.setHeader('Content-Type', mime.getType(outputPath))
+                res.end(result)
+            })
     }
 
     return renderMiddleware
@@ -79,7 +86,9 @@ const createRenderMiddleware = withConfig((config, basePath = '') => {
 
 const build = withConfig(async (config) => {
     const getOutputPath = (inputPath) => {
-        const dirname = path.dirname(inputPath.replace(config.input, config.output))
+        const dirname = path.dirname(
+            inputPath.replace(config.input, config.output),
+        )
         const basename = path.basename(inputPath, `.${config.inputExt}`)
         return path.join(dirname, `${basename}.${config.outputExt}`)
     }
@@ -87,7 +96,9 @@ const build = withConfig(async (config) => {
     const targetPattern = path.join(config.input, `**/*.${config.inputExt}`)
     const inputPaths = await globby(targetPattern, {
         nodir: true,
-        ignore: config.exclude.map((pattern) => path.join(config.input, pattern)),
+        ignore: config.exclude.map((pattern) =>
+            path.join(config.input, pattern),
+        ),
     })
 
     return Promise.all(
@@ -95,7 +106,11 @@ const build = withConfig(async (config) => {
             const outputFilePath = getOutputPath(inputPath)
             const outputDir = path.dirname(outputFilePath)
             await makeDir(outputDir)
-            const result = await config.task(inputPath)
+            const fileData = await readFileAsync(inputPath, 'utf8')
+            const result = await config.render({
+                src: fileData,
+                filename: inputPath,
+            })
             return writeFileAsync(outputFilePath, result)
         }),
     )
