@@ -17,9 +17,9 @@ const normalizePath = (pathname) => {
 }
 
 const loadConfig = (options = {}) => {
-    const input = path.normalize(options.input || './src')
+    const input = path.posix.normalize(options.input || './src')
     const inputExt = options.inputExt
-    const output = path.normalize(options.output || './dist')
+    const output = path.posix.normalize(options.output || './dist')
     const outputExt = options.outputExt
     const exclude = options.exclude || ['**/_*', '**/_*/**']
     const render = options.render
