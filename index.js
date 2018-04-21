@@ -11,9 +11,20 @@ const makeDir = require('make-dir')
 const readFileAsync = promisify(fs.readFile)
 const writeFileAsync = promisify(fs.writeFile)
 
+const toPosixPath = (pathname) => {
+    if (path.sep === path.posix.sep) {
+        return pathname
+    }
+
+    return pathname.replace(
+        new RegExp(`\\${path.win32.sep}`, 'g'),
+        path.posix.sep,
+    )
+}
+
 const normalizePath = (pathname) => {
     const isDirectory = /\/$/.test(pathname)
-    return isDirectory ? path.posix.join(pathname, 'index.html') : pathname
+    return isDirectory ? path.join(pathname, 'index.html') : pathname
 }
 
 const loadConfig = (options = {}) => {
@@ -66,11 +77,11 @@ const createRenderMiddleware = withConfig((config, basePath = '') => {
         return config.exclude.some((pattern) => minimatch(pathname, pattern))
     }
 
-    const pathPrefix = path.posix.join(basePath, '/')
+    const pathPrefix = toPosixPath(path.join(basePath, '/'))
 
     const renderMiddleware = (req, res, next) => {
         const parsedPath = url.parse(req.url).pathname
-        const reqPath = normalizePath(parsedPath)
+        const reqPath = toPosixPath(normalizePath(parsedPath))
 
         if (!reqPath.startsWith(pathPrefix)) {
             return next()
@@ -114,11 +125,11 @@ const build = withConfig(async (config) => {
     }
 
     const targetPattern = path.join(config.input, `**/*.${config.inputExt}`)
-    const inputPaths = await fg(targetPattern, {
+    const inputPaths = (await fg(targetPattern, {
         ignore: config.exclude.map((pattern) =>
-            path.join(config.input, pattern),
+            toPosixPath(path.join(config.input, pattern)),
         ),
-    })
+    })).map(path.normalize)
 
     return Promise.all(
         inputPaths.map(async (inputPath) => {
