@@ -76,7 +76,10 @@ const createRenderMiddleware = withConfig((config, basePath = '') => {
             return next()
         }
 
-        const outputPath = reqPath.replace(pathPrefix, '')
+        let outputPath = reqPath.replace(pathPrefix, '')
+        if (!path.extname(reqPath)) {
+            outputPath += '.html'
+        }
         const inputPath = getInputPath(outputPath)
         const isReqFileExists =
             fs.existsSync(inputPath) && fs.statSync(inputPath).isFile()
