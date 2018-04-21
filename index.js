@@ -12,8 +12,8 @@ const readFileAsync = promisify(fs.readFile)
 const writeFileAsync = promisify(fs.writeFile)
 
 const normalizePath = (pathname) => {
-    const isDirectory = /\/$/.test(path.posix.normalize(pathname))
-    return isDirectory ? path.posix.join(pathname, 'index.html') : path.posix.normalize(pathname)
+    const isDirectory = /\/$/.test(pathname)
+    return isDirectory ? path.posix.join(pathname, 'index.html') : pathname
 }
 
 const loadConfig = (options = {}) => {
@@ -56,13 +56,13 @@ const withConfig = (fn) => (options, ...args) =>
 const createRenderMiddleware = withConfig((config, basePath = '') => {
     const getInputPath = (outputPath) => {
         return replaceExt(
-            path.posix.join(config.input, outputPath),
+            path.join(config.input, outputPath),
             `.${config.inputExt}`,
         )
     }
 
     const isExcluded = (inputPath) => {
-        const pathname = path.posix.join(config.input, inputPath)
+        const pathname = path.join(config.input, inputPath)
         return config.exclude.some((pattern) => minimatch(pathname, pattern))
     }
 
@@ -110,10 +110,10 @@ const build = withConfig(async (config) => {
         )
     }
 
-    const targetPattern = path.posix.join(config.input, `**/*.${config.inputExt}`)
+    const targetPattern = path.join(config.input, `**/*.${config.inputExt}`)
     const inputPaths = await fg(targetPattern, {
         ignore: config.exclude.map((pattern) =>
-            path.posix.join(config.input, pattern),
+            path.join(config.input, pattern),
         ),
     })
 
