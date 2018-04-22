@@ -27,29 +27,55 @@ const normalizePath = (pathname) => {
   return isDirectory ? path.join(pathname, 'index.html') : pathname
 }
 
+const defaultOptions = {
+  input: './src',
+  output: './dist',
+  exclude: ['**/_*', '**/_*/**'],
+}
+
 const loadConfig = (options = {}) => {
-  const input = path.normalize(options.input || './src')
+  options = {
+    ...defaultOptions,
+    ...options,
+  }
+
+  if (typeof options.input !== 'string') {
+    throw new TypeError('options.input must be a string')
+  }
+
+  if (typeof options.inputExt !== 'string') {
+    throw new TypeError('options.inputExt must be a string')
+  }
+
+  if (typeof options.output !== 'string') {
+    throw new TypeError('options.output must be a string')
+  }
+
+  if (typeof options.outputExt !== 'string') {
+    throw new TypeError('options.outputExt must be a string')
+  }
+
+  if (
+    !(
+      Array.isArray(options.exclude) &&
+      options.exclude.every((pattern) => typeof pattern === 'string')
+    )
+  ) {
+    throw new TypeError(
+      'options.exclude must be a array, and all elements must be a string',
+    )
+  }
+
+  if (typeof options.render !== 'function') {
+    throw new TypeError('options.render must be a function')
+  }
+
+  const input = path.normalize(options.input)
   const inputExt = options.inputExt
-  const output = path.normalize(options.output || './dist')
+  const output = path.normalize(options.output)
   const outputExt = options.outputExt
-  const exclude = options.exclude || ['**/_*', '**/_*/**']
+  const exclude = options.exclude
   const render = options.render
-
-  if (typeof inputExt !== 'string') {
-    throw new TypeError('inputExt must be a string')
-  }
-
-  if (typeof outputExt !== 'string') {
-    throw new TypeError('outputExt must be a string')
-  }
-
-  if (!Array.isArray(exclude)) {
-    throw new TypeError('exclude must be a array')
-  }
-
-  if (typeof render !== 'function') {
-    throw new TypeError('render must be a function')
-  }
 
   return {
     input,
