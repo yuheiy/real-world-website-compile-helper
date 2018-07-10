@@ -110,14 +110,14 @@ const createRenderMiddleware = withConfig((config, basePath = '') => {
     const parsedPath = url.parse(req.url).pathname
     const reqPath = toPosixPath(normalizePath(parsedPath))
 
-    if (!reqPath.startsWith(pathPrefix)) {
+    if (
+      !reqPath.startsWith(pathPrefix) ||
+      path.extname(reqPath) !== `.${config.outputExt}`
+    ) {
       return next()
     }
 
-    let outputPath = reqPath.replace(pathPrefix, '')
-    if (!path.extname(reqPath) && config.outputExt === 'html') {
-      outputPath += `.${config.outputExt}`
-    }
+    const outputPath = reqPath.replace(pathPrefix, '')
     const inputPath = getInputPath(outputPath)
     const isReqFileExists =
       fs.existsSync(inputPath) && fs.statSync(inputPath).isFile()
