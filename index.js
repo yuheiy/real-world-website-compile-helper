@@ -1,6 +1,6 @@
 const path = require('path')
 const fs = require('fs')
-const { promisify } = require('util')
+const util = require('util')
 const url = require('url')
 const replaceExt = require('replace-ext')
 const minimatch = require('minimatch')
@@ -8,10 +8,10 @@ const mime = require('mime')
 const fg = require('fast-glob')
 const makeDir = require('make-dir')
 
-const readFileAsync = promisify(fs.readFile)
-const writeFileAsync = promisify(fs.writeFile)
+const readFileAsync = util.promisify(fs.readFile)
+const writeFileAsync = util.promisify(fs.writeFile)
 
-const toPosixPath = (pathname) => {
+const toPOSIXPath = (pathname) => {
   if (path.sep === path.posix.sep) {
     return pathname
   }
@@ -20,11 +20,6 @@ const toPosixPath = (pathname) => {
     new RegExp(`\\${path.win32.sep}`, 'g'),
     path.posix.sep,
   )
-}
-
-const normalizePath = (pathname) => {
-  const isDirectory = /\/$/.test(pathname)
-  return isDirectory ? path.join(pathname, 'index.html') : pathname
 }
 
 const defaultOptions = {
@@ -91,12 +86,16 @@ const withConfig = (fn) => (options, ...args) => {
   return fn(loadConfig(options), ...args)
 }
 
+const normalizePath = (pathname) => {
+  const isDirectory = /\/$/.test(pathname)
+  return isDirectory ? path.join(pathname, 'index.html') : pathname
+}
+
 const createRenderMiddleware = withConfig((config, basePath = '') => {
+  const pathPrefix = toPOSIXPath(path.join(basePath, '/'))
+
   const getInputPath = (outputPath) => {
-    return replaceExt(
-      path.join(config.input, outputPath),
-      `.${config.inputExt}`,
-    )
+    return replaceExt(path.join(config.input, outputPath), config.inputExt)
   }
 
   const isExcluded = (inputPath) => {
@@ -104,15 +103,13 @@ const createRenderMiddleware = withConfig((config, basePath = '') => {
     return config.exclude.some((pattern) => minimatch(pathname, pattern))
   }
 
-  const pathPrefix = toPosixPath(path.join(basePath, '/'))
-
   const renderMiddleware = (req, res, next) => {
     const parsedPath = url.parse(req.url).pathname
-    const reqPath = toPosixPath(normalizePath(parsedPath))
+    const reqPath = toPOSIXPath(normalizePath(parsedPath))
 
     if (
       !reqPath.startsWith(pathPrefix) ||
-      path.extname(reqPath) !== `.${config.outputExt}`
+      path.extname(reqPath) !== config.outputExt
     ) {
       return next()
     }
@@ -145,14 +142,14 @@ const build = withConfig(async (config) => {
   const getOutputPath = (inputPath) => {
     return replaceExt(
       inputPath.replace(config.input, config.output),
-      `.${config.outputExt}`,
+      config.outputExt,
     )
   }
 
-  const targetPattern = path.join(config.input, `**/*.${config.inputExt}`)
+  const targetPattern = path.join(config.input, `**/*${config.inputExt}`)
   const inputPaths = (await fg(targetPattern, {
     ignore: config.exclude.map((pattern) =>
-      toPosixPath(path.join(config.input, pattern)),
+      toPOSIXPath(path.join(config.input, pattern)),
     ),
   })).map(path.normalize)
 
