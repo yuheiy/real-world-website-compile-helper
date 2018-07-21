@@ -1,8 +1,8 @@
 {
-  "name": "real-world-website-render-helper",
+  "name": "real-world-website-compile-helper",
   "version": "0.0.4",
   "main": "index.js",
-  "repository": "https://github.com/yuheiy/real-world-website-render-helper.git",
+  "repository": "https://github.com/yuheiy/real-world-website-compile-helper.git",
   "author": "Yuhei Yasuda <yuhei.yasuda1003@gmail.com>",
   "license": "MIT",
   "dependencies": {

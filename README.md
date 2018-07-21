@@ -1,15 +1,15 @@
-# real-world-website-render-helper
+# real-world-website-compile-helper
 
 ## Installation
 
 ```bash
-npm install -D yuheiy/real-world-website-render-helper
+npm install -D yuheiy/real-world-website-compile-helper
 ```
 
 ## Usage
 
 ```js
-const renderHelper = require('real-world-website-render-helper')
+const compileHelper = require('real-world-website-compile-helper')
 const gulp = require('gulp')
 const pug = require('pug')
 const browserSync = require('browser-sync')
