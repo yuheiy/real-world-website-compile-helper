@@ -1,7 +1,7 @@
 const path = require('path')
 const fs = require('fs')
 const util = require('util')
-const renderHelper = require('..')
+const compileHelper = require('..')
 const replaceExt = require('replace-ext')
 const pug = require('pug')
 const browserSync = require('browser-sync')
@@ -19,12 +19,12 @@ const readPageData = (filename) => {
   })
 }
 
-const htmlRendererConfig = {
+const htmlCompilerConfig = {
   input: srcDir,
   inputExt: '.pug',
   output: distDir,
   outputExt: '.html',
-  render: ({ src, filename }) => {
+  compile: ({ src, filename }) => {
     return readPageData(filename).then((pageData) => {
       return pug.render(String(src), { ...pageData, filename })
     })
@@ -34,8 +34,8 @@ const htmlRendererConfig = {
 const startDevServer = () => {
   return new Promise((resolve) => {
     const bs = browserSync.create()
-    const renderHtmlMiddleware = renderHelper.createRenderMiddleware(
-      htmlRendererConfig,
+    const compileHtmlMiddleware = compileHelper.buildCompileMiddleware(
+      htmlCompilerConfig,
     )
 
     bs.init(
@@ -48,7 +48,7 @@ const startDevServer = () => {
           },
         ],
         watchEvents: ['add', 'change', 'unlink'],
-        middleware: renderHtmlMiddleware,
+        middleware: compileHtmlMiddleware,
         open: false,
       },
       resolve,
@@ -61,7 +61,7 @@ const clean = () => {
 }
 
 const build = () => {
-  return renderHelper.build(htmlRendererConfig)
+  return compileHelper.buildFiles(htmlCompilerConfig)
 }
 
 const script = process.argv[2]

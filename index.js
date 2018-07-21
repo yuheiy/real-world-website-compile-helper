@@ -61,8 +61,8 @@ const loadConfig = (options = {}) => {
     )
   }
 
-  if (typeof options.render !== 'function') {
-    throw new TypeError('options.render must be a function')
+  if (typeof options.compile !== 'function') {
+    throw new TypeError('options.compile must be a function')
   }
 
   const input = path.normalize(options.input)
@@ -70,7 +70,7 @@ const loadConfig = (options = {}) => {
   const output = path.normalize(options.output)
   const outputExt = options.outputExt
   const exclude = options.exclude
-  const render = options.render
+  const compile = options.compile
 
   return {
     input,
@@ -78,7 +78,7 @@ const loadConfig = (options = {}) => {
     output,
     outputExt,
     exclude,
-    render,
+    compile,
   }
 }
 
@@ -91,7 +91,7 @@ const normalizePath = (pathname) => {
   return isDirectory ? path.join(pathname, 'index.html') : pathname
 }
 
-const createRenderMiddleware = withConfig((config, basePath = '') => {
+const buildCompileMiddleware = withConfig((config, basePath = '') => {
   const pathPrefix = toPOSIXPath(path.join(basePath, '/'))
 
   const getInputPath = (outputPath) => {
@@ -103,7 +103,7 @@ const createRenderMiddleware = withConfig((config, basePath = '') => {
     return config.exclude.some((pattern) => minimatch(pathname, pattern))
   }
 
-  const renderMiddleware = (req, res, next) => {
+  const compileMiddleware = (req, res, next) => {
     const parsedPath = url.parse(req.url).pathname
     const reqPath = toPOSIXPath(normalizePath(parsedPath))
 
@@ -128,17 +128,19 @@ const createRenderMiddleware = withConfig((config, basePath = '') => {
     }
 
     readFileAsync(inputPath)
-      .then((fileData) => config.render({ src: fileData, filename: inputPath }))
+      .then((fileData) =>
+        config.compile({ src: fileData, filename: inputPath }),
+      )
       .then((result) => {
         res.setHeader('Content-Type', mime.getType(outputPath))
         res.end(result)
       })
   }
 
-  return renderMiddleware
+  return compileMiddleware
 })
 
-const build = withConfig(async (config) => {
+const buildFiles = withConfig(async (config) => {
   const getOutputPath = (inputPath) => {
     return replaceExt(
       inputPath.replace(config.input, config.output),
@@ -159,7 +161,7 @@ const build = withConfig(async (config) => {
       const outputDir = path.dirname(outputFilePath)
       await makeDir(outputDir)
       const fileData = await readFileAsync(inputPath)
-      const result = await config.render({
+      const result = await config.compile({
         src: fileData,
         filename: inputPath,
       })
@@ -169,6 +171,6 @@ const build = withConfig(async (config) => {
 })
 
 module.exports = {
-  createRenderMiddleware,
-  build,
+  buildCompileMiddleware,
+  buildFiles,
 }

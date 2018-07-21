@@ -15,23 +15,27 @@ const pug = require('pug')
 const browserSync = require('browser-sync')
 const del = require('del')
 
-const htmlRendererConfig = {
+const readPageData = (filename) => {
+  // ...
+}
+
+const htmlCompilerConfig = {
   input: 'src',
   inputExt: '.pug',
   output: 'dist',
   outputExt: '.html',
   exclude: ['**/_*', '**/_*/**'],
-  render: ({ src, filename }) => {
+  compile: ({ src, filename }) => {
     return readPageData(filename).then((pageData) => {
-      return pug.render(String(src), { ...pageData, filename })
+      return pug.render(String(src), { filename })
     })
   },
 }
 
 const serve = (done) => {
   const bs = browserSync.create()
-  const renderHtmlMiddleware = renderHelper.createRenderMiddleware(
-    htmlRendererConfig,
+  const compileHtmlMiddleware = compileHelper.buildCompileMiddleware(
+    htmlCompilerConfig,
   )
 
   bs.init(
@@ -39,12 +43,12 @@ const serve = (done) => {
       server: 'public',
       files: [
         {
-          match: ['public', 'src/**/*.{pug,json}'],
+          match: ['src/**/*.{pug,json}', 'public'],
           fn: bs.reload,
         },
       ],
       watchEvents: ['add', 'change', 'unlink'],
-      middleware: renderHtmlMiddleware,
+      middleware: compileHtmlMiddleware,
     },
     done,
   )
@@ -57,7 +61,7 @@ const clean = () => {
 }
 
 const html = () => {
-  return renderHelper.build(htmlRendererConfig)
+  return compileHelper.buildFiles(htmlCompilerConfig)
 }
 
 const copy = () => {
